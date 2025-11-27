@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Quest - Learn HTML Through Gaming</title>
+    <link rel="stylesheet" href="htmlquest.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="game-header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="game-title">
+                    <span class="title-icon">🎮</span>
+                    HTML Quest
+                </h1>
+                <div class="player-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value" id="totalPoints">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🏆</span>
+                        <span class="stat-value" id="badgeCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🔥</span>
+                        <span class="stat-value" id="streakCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="game-main">
+        <div class="container">
+            <!-- Navigation Tabs -->
+            <nav class="game-nav">
+                <button class="nav-tab active" data-tab="levels">Levels</button>
+                <button class="nav-tab" data-tab="sandbox">Sandbox</button>
+                <button class="nav-tab" data-tab="achievements">Achievements</button>
+                <button class="nav-tab" data-tab="reference">Reference</button>
+            </nav>
+
+            <!-- Levels Section -->
+            <section id="levels-section" class="game-section active">
+                <div class="levels-grid" id="levelsGrid">
+                    <!-- Levels will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Challenge Modal -->
+            <div id="challengeModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="challengeTitle">Challenge Title</h2>
+                        <button class="close-btn" id="closeModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="challengeDescription">Challenge description</p>
+                        <div id="challengeArea">
+                            <!-- Challenge content will be dynamically generated -->
+                        </div>
+                        <div class="challenge-actions">
+                            <button class="btn btn--primary" id="submitAnswer">Submit Answer</button>
+                            <button class="btn btn--secondary" id="showHint">Show Hint</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sandbox Section -->
+            <section id="sandbox-section" class="game-section">
+                <div class="sandbox-container">
+                    <div class="sandbox-header">
+                        <h2>HTML Sandbox</h2>
+                        <p>Practice your HTML skills with live preview</p>
+                    </div>
+                    <div class="sandbox-content">
+                        <div class="code-panel">
+                            <h3>HTML Code</h3>
+                            <textarea id="htmlEditor" class="code-editor" placeholder="Type your HTML code here..."><!DOCTYPE html>
+<html>
+<head>
+    <title>My Page</title>
+</head>
+<body>
+    <h1>Welcome to HTML!</h1>
+    <p>Start coding here...</p>
+</body>
+</html></textarea>
+                        </div>
+                        <div class="preview-panel">
+                            <h3>Live Preview</h3>
+                            <iframe id="preview" class="preview-frame"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Achievements Section -->
+            <section id="achievements-section" class="game-section">
+                <div class="achievements-header">
+                    <h2>Your Achievements</h2>
+                    <p>Collect badges by completing challenges and reaching milestones</p>
+                </div>
+                <div class="badges-grid" id="badgesGrid">
+                    <!-- Badges will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Reference Section -->
+            <section id="reference-section" class="game-section">
+                <div class="reference-header">
+                    <h2>HTML Reference Guide</h2>
+                    <p>Quick reference for HTML tags and attributes</p>
+                </div>
+                <div class="reference-content" id="referenceContent">
+                    <!-- Reference content will be dynamically generated -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">🎉</div>
+            <h2 id="successTitle">Congratulations!</h2>
+            <p id="successMessage">You've completed the challenge!</p>
+            <div class="success-stats">
+                <div class="success-stat">
+                    <span>Points Earned:</span>
+                    <span id="pointsEarned">0</span>
+                </div>
+                <div class="success-stat" id="badgeEarned" style="display: none;">
+                    <span>Badge Unlocked:</span>
+                    <span id="badgeName"></span>
+                </div>
+            </div>
+            <button class="btn btn--primary" id="continueBtn">Continue</button>
+        </div>
+    </div>
+
+    <!-- Drag &amp; Drop Area -->
+    <div id="dragDropArea" class="drag-drop-container" style="display: none;">
+        <div class="drop-zones" id="dropZones">
+            <!-- Drop zones will be dynamically created -->
+        </div>
+        <div class="draggable-items" id="draggableItems">
+            <!-- Draggable items will be dynamically created -->
+        </div>
+    </div>
+
+    <script src="htmlquest.js"></script>
+</body>
+</html>

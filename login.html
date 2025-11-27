@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Purple Gamified Login</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #000;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+    }
+
+    .container {
+      width: 350px;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 32px;
+      color: #c77dff;
+      margin-bottom: 25px;
+      text-shadow: 0 0 18px #c77dff;
+    }
+
+    .form-box {
+      background: #111;
+      border: 2px solid #9d4edd;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 0 25px #9d4edd;
+    }
+
+    input {
+      width: 80%;
+      padding: 12px;
+      margin: 10px auto;
+      display: block;
+      background: #000;
+      border: 1px solid #9d4edd;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      box-shadow: 0 0 12px #c77dff;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #c77dff;
+      border: none;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #000;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #e0aaff;
+      box-shadow: 0 0 15px #c77dff;
+    }
+
+    span {
+      color: #e0aaff;
+      cursor: pointer;
+    }
+
+    h3 {
+      color: #e0aaff;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px #9d4edd;
+    }
+
+    body {
+      background-image: url("https://cdna.artstation.com/p/assets/images/images/021/720/920/original/pixel-jeff-mario.gif?1572709433");
+      /* Path to your GIF */
+      background-repeat: no-repeat;
+      /* Prevent tiling */
+      background-size: cover;
+      /* Stretch to fill screen */
+      background-position: center;
+      /* Center the GIF */
+      height: 100vh;
+      /* Full viewport height */
+      margin: 0;
+      /* Remove default margin */
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2 class="title">⚡ Player Portal ⚡</h2>
+    <div class="form-box">
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm">
+        <h3>Login</h3>
+        <input type="email" id="loginEmail" placeholder="Email" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit">Enter Arena</button>
+        <p>New Player? <span onclick="showSignup()">Sign Up</span></p>
+      </form>
+
+      <!-- SIGNUP FORM -->
+      <form id="signupForm" style="display: none;">
+        <h3>Create Account</h3>
+        <input type="text" id="signupName" placeholder="Your Name" required />
+        <input type="email" id="signupEmail" placeholder="Email" required />
+        <input type="password" id="signupPassword" placeholder="Password" required />
+        <button type="submit">Join The Game</button>
+        <p>Already have an account? <span onclick="showLogin()">Login</span></p>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    function showSignup() {
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("signupForm").style.display = "block";
+    }
+
+    function showLogin() {
+      document.getElementById("signupForm").style.display = "none";
+      document.getElementById("loginForm").style.display = "block";
+    }
+
+    // LOGIN FUNCTION
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      try {
+        const res = await fetch("http://localhost:3000/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        if (data.success && data.token) {
+          localStorage.setItem("authToken", data.token);
+          window.location.href = "introduction.html"; // dashboard
+        }
+      } catch (err) {
+        alert("Login failed. Please try again.");
+        console.error(err);
+      }
+    });
+
+    // SIGNUP FUNCTION
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("signupName").value;
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+
+      try {
+        const res = await fetch("http://localhost:3000/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        if (data.success) {
+          showLogin();
+        }
+      } catch (err) {
+        alert("Signup failed. Please try again.");
+        console.error(err);
+      }
+    });
+  </script>
+
+</body>
+
+</html>
