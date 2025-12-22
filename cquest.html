@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>C Quest - Learn C Through Gaming</title>
   <link rel="stylesheet" href="cquest.css">
 </head>
+
 <body>
   <!-- Header -->
   <header class="game-header">
@@ -28,10 +30,25 @@
             <span class="stat-icon">🔥</span>
             <span class="stat-value" id="streakCount">0</span>
           </div>
+          <!-- Profile Circle -->
+          <div id="profileCircle"></div>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- Overlay + Profile Modal -->
+  <div id="overlay" class="hidden"></div>
+  <div id="userModal" class="hidden">
+    <h2>User Profile</h2>
+    <p><strong>Name:</strong> <span id="userName"></span></p>
+    <p><strong>Email:</strong> <span id="userEmail"></span></p>
+    <p><strong>Stars:</strong> <span id="userStars"></span></p>
+    <p><strong>HTML Progress:</strong> <span id="userHtml"></span></p>
+    <p><strong>C Progress:</strong> <span id="userC"></span></p>
+    <p><strong>Badges:</strong> <span id="userBadges"></span></p>
+    <button id="closeProfileModal">Close</button>
+  </div>
 
   <!-- Main Game Area -->
   <main class="game-main">
@@ -42,6 +59,7 @@
         <button class="nav-tab" data-tab="sandbox">Sandbox</button>
         <button class="nav-tab" data-tab="achievements">Achievements</button>
         <button class="nav-tab" data-tab="reference">Reference</button>
+        <button class="nav-tab" data-tab="leaderboard">Leaderboard</button>
       </nav>
 
       <!-- Levels Section -->
@@ -83,7 +101,7 @@
               <h3>C Code</h3>
               <textarea id="cEditor" class="code-editor" placeholder="Type your C code here...">#include <stdio.h>
 int main() {
-    printf("Hello, C Quest!\\n");
+    printf("Hello, C Quest!\n");
     return 0;
 }</textarea>
             </div>
@@ -114,6 +132,17 @@ int main() {
         </div>
         <div class="reference-content" id="referenceContent">
           <!-- Reference content will be dynamically generated -->
+        </div>
+      </section>
+
+      <!-- Leaderboard Section -->
+      <section id="leaderboard-section" class="game-section">
+        <div class="leaderboard-header">
+          <h2>Leaderboard</h2>
+          <p>See how you rank among other players and track top scores</p>
+        </div>
+        <div class="leaderboard-grid" id="leaderboardGrid">
+          <!-- Leaderboard entries will be dynamically generated -->
         </div>
       </section>
     </div>
@@ -149,6 +178,31 @@ int main() {
     </div>
   </div>
 
+  <!-- AI Chatbot Button (Floating) -->
+  <button id="aiChatBtn" class="ai-chat-btn" title="Ask AI">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </button>
+
+  <!-- AI Chatbot Panel (Right Sidebar - Hidden by default) -->
+  <div id="aiChatPanel" class="ai-chat-panel hidden">
+    <div class="ai-chat-header">
+      <h3>AI Assistant</h3>
+      <button id="closeAiChat" class="close-chat-btn">×</button>
+    </div>
+    <div id="aiChatMessages" class="ai-chat-messages"></div>
+    <div class="ai-chat-input">
+      <input type="text" id="aiChatInput" placeholder="Ask about C programming, challenges, or game help..." />
+      <button id="aiSendBtn">Send</button>
+    </div>
+  </div>
+
+  <!-- Overlay for mobile -->
+  <div id="aiChatOverlay" class="ai-chat-overlay hidden"></div>
+
+
   <script src="cquest.js"></script>
 </body>
+
 </html>

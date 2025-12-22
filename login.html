@@ -85,17 +85,11 @@
 
     body {
       background-image: url("https://cdna.artstation.com/p/assets/images/images/021/720/920/original/pixel-jeff-mario.gif?1572709433");
-      /* Path to your GIF */
       background-repeat: no-repeat;
-      /* Prevent tiling */
       background-size: cover;
-      /* Stretch to fill screen */
       background-position: center;
-      /* Center the GIF */
       height: 100vh;
-      /* Full viewport height */
       margin: 0;
-      /* Remove default margin */
     }
   </style>
 </head>
@@ -155,10 +149,14 @@
         const data = await res.json();
         alert(data.message);
 
-        if (data.success && data.token) {
-          localStorage.setItem("authToken", data.token);
-          window.location.href = "introduction.html"; // dashboard
+        if (data.success) {
+          // ✅ Save full user object for profile circle & modal
+          localStorage.setItem("user", JSON.stringify(data.user));
+
+          // Redirect to introduction page
+          window.location.href = "./introduction.html";
         }
+
       } catch (err) {
         alert("Login failed. Please try again.");
         console.error(err);
