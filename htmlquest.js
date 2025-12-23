@@ -6,6 +6,16 @@ let user = JSON.parse(localStorage.getItem("user")) || null;
 const MAX_LEVELS_HTML = 42;       // save up to 42 steps for HTML
 const STARS_PER_HTML_CHALLENGE = 10; // award per completed HTML challenge
 
+// 🔐 Escape HTML to prevent browser parsing
+function escapeHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+
 // --- Backend helpers ---
 async function saveProgress(email, quest, levelValue, stars, badge) {
   try {
@@ -231,14 +241,13 @@ class GameState {
           },
           {
             id: 10,
-            title: "Variable Concept",
+            title: "Semantic Tags Purpose",
             type: "wh-question",
-            description: "Why do we use semantic tags in HTML?",
-            keywords: ["meaning", "SEO", "accessibility"],
+            description: "Why are semantic tags important in HTML?",
+            keywords: ["structure", "SEO"],
             points: 50,
             completed: false
-          },
-
+          }
         ]
       },
       {
@@ -283,7 +292,7 @@ class GameState {
             title: "Ordered List Output",
             type: "output",
             description: "What does <ol><li>A</li><li>B</li></ol> produce?",
-            solution: "Numbered list with A and B",
+            solution: "Ordered list with A and B",
             points: 50,
             completed: false
           },
@@ -597,22 +606,114 @@ class GameState {
       }
     ];
 
-    this.badges = [
-      { name: "First Steps", description: "Complete your first C challenge", icon: "🥾", requirement: "complete_first_challenge", earned: false },
-      { name: "Loop Master", description: "Master all loop challenges", icon: "🔄", requirement: "complete_loop_challenges", earned: false },
-      { name: "Pointer Pro", description: "Solve pointer challenges", icon: "📌", requirement: "complete_pointer_challenge", earned: false },
-      { name: "Struct Specialist", description: "Solve structure challenges", icon: "🧩", requirement: "complete_struct_challenge", earned: false },
-      { name: "C Expert", description: "Complete all levels", icon: "👑", requirement: "complete_all_levels", earned: false }
+    this.htmlbadges = [
+      {
+        name: "HTML Beginner",
+        description: "Complete your first HTML challenge",
+        icon: "🌱",
+        requirement: "complete_first_html_challenge",
+        earned: false
+      },
+      {
+        name: "Tag Tamer",
+        description: "Master basic HTML tags",
+        icon: "🏷️",
+        requirement: "complete_basic_tags",
+        earned: false
+      },
+      {
+        name: "Link Builder",
+        description: "Complete all link and list challenges",
+        icon: "🔗",
+        requirement: "complete_links_lists",
+        earned: false
+      },
+      {
+        name: "Semantic Pro",
+        description: "Solve all semantic HTML challenges",
+        icon: "🧠",
+        requirement: "complete_semantic_html",
+        earned: false
+      },
+      {
+        name: "HTML Expert",
+        description: "Complete all HTML levels",
+        icon: "👑",
+        requirement: "complete_all_html_levels",
+        earned: false
+      }
     ];
 
-    this.cReference = [
-      { tag: "#include <stdio.h>", description: "Header file for input/output functions", example: "#include <stdio.h>" },
-      { tag: "int main()", description: "Entry point of a C program", example: "int main() { return 0; }" },
-      { tag: "printf()", description: "Prints formatted output", example: "printf(\"Hello World\\n\");" },
-      { tag: "scanf()", description: "Reads formatted input", example: "scanf(\"%d\", &num);" },
-      { tag: "for loop", description: "Repeats code a fixed number of times", example: "for(int i=0; i<5; i++) { }" },
-      { tag: "pointer", description: "Stores memory address of a variable", example: "int *p = &x;" },
-      { tag: "struct", description: "Defines a custom data type", example: "struct Point { int x; int y; };" }
+    this.htmlReference = [
+      {
+        title: "Basic HTML Structure",
+        content: `
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;My Page&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    Content goes here
+  &lt;/body&gt;
+&lt;/html&gt;
+    `
+      },
+      {
+        title: "Common HTML Tags",
+        content: `
+&lt;h1&gt; to &lt;h6&gt; – Headings  
+&lt;p&gt; – Paragraph  
+&lt;div&gt; – Container  
+&lt;span&gt; – Inline text  
+&lt;br&gt; – Line break
+    `
+      },
+      {
+        title: "Links",
+        content: `
+&lt;a href="https://example.com"&gt;Visit Site&lt;/a&gt;
+    `
+      },
+      {
+        title: "Images",
+        content: `
+&lt;img src="image.jpg" alt="Description"&gt;
+    `
+      },
+      {
+        title: "Lists",
+        content: `
+Unordered List:
+&lt;ul&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+&lt;/ul&gt;
+
+Ordered List:
+&lt;ol&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+&lt;/ol&gt;
+    `
+      },
+      {
+        title: "Forms",
+        content: `
+&lt;form&gt;
+  &lt;input type="text" placeholder="Name"&gt;
+  &lt;button&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+    `
+      },
+      {
+        title: "HTML Attributes",
+        content: `
+href – link URL  
+src – image source  
+alt – alternate text  
+class – CSS class  
+id – unique identifier
+    `
+      }
     ];
 
     this.playerStats = { totalPoints: 0, streak: 0, badgesEarned: 0 };
@@ -655,6 +756,7 @@ class GameState {
     for (let i = 0; i < this.levels.length; i++) {
       const level = this.levels[i];
       const allChallengesCompleted = level.challenges.every(c => c.completed);
+
       if (allChallengesCompleted && !level.completed) {
         level.completed = true;
         if (i < this.levels.length - 1) {
@@ -662,24 +764,43 @@ class GameState {
         }
       }
     }
+
+    // ✅ Correct badge checker
     return this.checkBadges();
   }
 
-  checkBadges() {
-    const completedChallenges = this.levels.flatMap(l => l.challenges).filter(c => c.completed);
-    const completedLevels = this.levels.filter(l => l.completed);
 
-    if (completedChallenges.length >= 1 && !this.badges[0].earned) {
-      this.badges[0].earned = true; this.playerStats.badgesEarned++; return this.badges[0];
-    }
-    if (completedLevels.length >= 1 && !this.badges[1].earned) {
-      this.badges[1].earned = true; this.playerStats.badgesEarned++; return this.badges[1];
-    }
-    if (completedLevels.length === this.levels.length && !this.badges[4].earned) {
-      this.badges[4].earned = true; this.playerStats.badgesEarned++; return this.badges[4];
-    }
-    return null;
+  checkBadges() {
+    const completedCount = this.levels.reduce(
+      (sum, lvl) => sum + lvl.challenges.filter(c => c.completed).length,
+      0
+    );
+
+    const badges =
+      activeQuest === "html"
+        ? this.htmlbadges
+        : this.badges;
+
+    let newlyEarned = null;
+
+    const unlock = (index) => {
+      if (badges[index] && !badges[index].earned) {
+        badges[index].earned = true;
+        this.playerStats.badgesEarned++;
+        newlyEarned = badges[index];
+      }
+    };
+
+    // HTML badge logic
+    if (completedCount >= 1) unlock(0);
+    if (completedCount >= 10) unlock(1);
+    if (completedCount >= 20) unlock(2);
+    if (completedCount >= 30) unlock(3);
+    if (completedCount >= 42) unlock(4);
+
+    return newlyEarned;
   }
+
 
   completeChallenge(challengeId, points) {
     for (const level of this.levels) {
@@ -720,13 +841,25 @@ const elements = {
   badgeEarned: document.getElementById('badgeEarned'),
   badgeName: document.getElementById('badgeName'),
   continueBtn: document.getElementById('continueBtn'),
-  htmlEditor: document.getElementById('htmlEditor'),
-  preview: document.getElementById('preview'),
+  cEditor: document.getElementById('cEditor'),
+  cOutput: document.getElementById('cOutput'),
   badgesGrid: document.getElementById('badgesGrid'),
   referenceContent: document.getElementById('referenceContent'),
   navTabs: document.querySelectorAll('.nav-tab'),
+  htmlEditor: document.getElementById('htmlEditor'),
+  preview: document.getElementById('preview'),
   gameSections: document.querySelectorAll('.game-section')
 };
+
+// ================================
+// AI Chat Elements - FIXED
+
+const aiChatInput = document.getElementById("aiChatInput");
+const aiSendBtn = document.getElementById("aiSendBtn");
+const aiChatMessages = document.getElementById("aiChatMessages");
+const aiChatToggle = document.getElementById("aiChatBtn");
+const aiChatBox = document.getElementById("aiChatPanel");
+
 
 // Navigation
 function initNavigation() {
@@ -737,6 +870,54 @@ function initNavigation() {
     });
   });
 }
+
+function initAIChat() {
+  console.log('🔧 Initializing HTML Quest AI Chat...');
+  
+  if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
+    console.error('❌ HTML AI Chat: Required elements missing');
+    return;
+  }
+
+  // Send + Enter key
+  aiSendBtn.addEventListener('click', sendAIMessage);
+  aiChatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendAIMessage();
+    }
+  });
+
+  // ✅ Toggle .active (matches your CSS)
+  if (aiChatToggle && aiChatBox) {
+    aiChatToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('🖱️ HTML Chat button clicked!');
+      
+      if (aiChatBox.classList.contains('active')) {
+        aiChatBox.classList.remove('active');
+        document.body.classList.remove('ai-chat-open');
+      } else {
+        aiChatBox.classList.add('active');
+        document.body.classList.add('ai-chat-open');
+        aiChatInput.focus();
+      }
+    });
+  }
+
+  // Close button
+  const closeAiChatBtn = document.getElementById("closeAiChat");
+  if (closeAiChatBtn) {
+    closeAiChatBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      aiChatBox.classList.remove('active');
+      document.body.classList.remove('ai-chat-open');
+    });
+  }
+
+  console.log('✅ HTML AI Chat initialized!');
+}
+
 
 function switchSection(sectionName) {
   // Update active tab
@@ -755,7 +936,7 @@ function switchSection(sectionName) {
   else if (sectionName === 'reference') renderReference();
 }
 // ================================
-// html Quest - Rendering Functions
+// C Quest - Rendering Functions
 // ================================
 
 function renderLevels() {
@@ -792,7 +973,18 @@ function renderLevels() {
 
 function renderBadges() {
   elements.badgesGrid.innerHTML = '';
-  gameState.badges.forEach(badge => {
+
+  const badges =
+    activeQuest === "html"
+      ? gameState.htmlbadges
+      : gameState.badges;
+
+  if (!Array.isArray(badges)) {
+    console.warn("No badges available for quest:", activeQuest);
+    return;
+  }
+
+  badges.forEach(badge => {
     const badgeCard = document.createElement('div');
     badgeCard.className = `badge-card ${badge.earned ? 'earned' : ''}`;
     badgeCard.innerHTML = `
@@ -804,24 +996,33 @@ function renderBadges() {
   });
 }
 
+
 function renderReference() {
   elements.referenceContent.innerHTML = '';
-  const referenceGrid = document.createElement('div');
-  referenceGrid.className = 'reference-grid';
-  gameState.cReference.forEach(item => {
-    const referenceItem = document.createElement('div');
-    referenceItem.className = 'reference-item';
-    referenceItem.innerHTML = `
-      <div class="reference-tag">${item.tag}</div>
-      <div class="reference-description">${item.description}</div>
-      <div class="reference-example">${item.example}</div>
+
+  const referenceData =
+    activeQuest === 'html'
+      ? gameState.htmlReference
+      : gameState.reference;
+
+  if (!Array.isArray(referenceData)) {
+    console.warn('No reference data found for quest:', activeQuest);
+    return;
+  }
+
+  referenceData.forEach(item => {
+    const refDiv = document.createElement('div');
+    refDiv.className = 'reference-item';
+    refDiv.innerHTML = `
+      <h4>${item.title}</h4>
+      <p>${item.content}</p>
     `;
-    referenceGrid.appendChild(referenceItem);
+    elements.referenceContent.appendChild(refDiv);
   });
-  elements.referenceContent.appendChild(referenceGrid);
 }
+
 // ================================
-// html Quest - Challenges & Feedback
+// C Quest - Challenges & Feedback
 // ================================
 
 // Render Challenge Types
@@ -841,7 +1042,11 @@ function openChallenge(challenge) {
     case 'code-editor': renderCodeEditorChallenge(challenge); break;
     case 'fill-blank': renderFillBlankChallenge(challenge); break;
     case 'drag-drop': renderDragDropChallenge(challenge); break;
+    case 'match': renderMatchChallenge(challenge); break;
+    case 'wh-question': renderWhQuestionChallenge(challenge); break;
+    case 'output': renderOutputChallenge(challenge); break; // ✅ ADD THIS
   }
+
   elements.challengeModal.classList.add('active');
 }
 
@@ -872,10 +1077,10 @@ function renderFillBlankChallenge(challenge) {
   const container = document.createElement('div');
   container.className = 'fill-blank-container';
 
-  // Use description as template
-  let template = challenge.description;
+  // ✅ Escape HTML first
+  let template = escapeHTML(challenge.description);
 
-  // Count blanks (___)
+  // Find blanks
   const blanks = template.match(/___/g) || [];
 
   blanks.forEach((_, index) => {
@@ -888,7 +1093,7 @@ function renderFillBlankChallenge(challenge) {
   container.innerHTML = template;
   elements.challengeArea.appendChild(container);
 
-  // Store expected answers safely
+  // Expected answers
   challenge.blanks = challenge.solution
     ? challenge.solution.split(',').map(s => s.trim())
     : [];
@@ -947,6 +1152,74 @@ function handleDrop(e) {
   }
 }
 
+function renderWhQuestionChallenge(challenge) {
+  const container = document.createElement("div");
+  container.className = "wh-question-container";
+
+  container.innerHTML = `
+    <textarea 
+      class="wh-answer"
+      rows="5"
+      placeholder="Type your answer here..."
+    ></textarea>
+  `;
+
+  elements.challengeArea.appendChild(container);
+}
+
+
+function checkWhQuestionAnswer(challenge) {
+  const textarea = document.querySelector(".wh-answer");
+  if (!textarea) return false;
+
+  const userAnswer = textarea.value.toLowerCase();
+
+  let matchCount = 0;
+
+  challenge.keywords.forEach(keyword => {
+    if (userAnswer.includes(keyword.toLowerCase())) {
+      matchCount++;
+    }
+  });
+
+  // ✅ Require at least 1 keywords
+  const isCorrect = matchCount >= 1;
+
+  textarea.classList.add(
+    isCorrect ? "success-feedback" : "error-feedback"
+  );
+
+  return isCorrect;
+}
+
+function renderOutputChallenge(challenge) {
+  const container = document.createElement("div");
+  container.className = "output-container";
+
+  container.innerHTML = `
+    <input 
+      type="text"
+      class="output-input"
+      placeholder="Type your answer here"
+    />
+  `;
+
+  elements.challengeArea.appendChild(container);
+}
+
+
+function checkOutputAnswer(challenge) {
+  const input = document.querySelector(".output-input");
+  if (!input) return false;
+
+  const userAnswer = input.value.trim().toLowerCase();
+  const correctAnswer = challenge.solution.trim().toLowerCase();
+
+  const isCorrect = userAnswer === correctAnswer;
+
+  input.classList.add(isCorrect ? "success-feedback" : "error-feedback");
+  return isCorrect;
+}
 
 // Answer Submission
 function submitAnswer() {
@@ -955,18 +1228,13 @@ function submitAnswer() {
   let isCorrect = false;
 
   switch (challenge.type) {
-    case 'quiz':
-      isCorrect = checkQuizAnswer(challenge);
-      break;
-    case 'code-editor':
-      isCorrect = checkCodeEditorAnswer(challenge);
-      break;
-    case 'fill-blank':
-      isCorrect = checkFillBlankAnswer(challenge);
-      break;
-    case 'drag-drop':
-      isCorrect = checkDragDropAnswer(challenge);
-      break;
+    case 'quiz': isCorrect = checkQuizAnswer(challenge); break;
+    case 'code-editor': isCorrect = checkCodeEditorAnswer(challenge); break;
+    case 'fill-blank': isCorrect = checkFillBlankAnswer(challenge); break;
+    case 'drag-drop': isCorrect = checkDragDropAnswer(challenge); break;
+    case 'match': isCorrect = checkMatchAnswer(challenge); break;
+    case 'wh-question': isCorrect = checkWhQuestionAnswer(challenge); break;
+    case 'output': isCorrect = checkOutputAnswer(challenge); break; // ✅ ADD
   }
 
   if (isCorrect) {
@@ -991,7 +1259,6 @@ function submitAnswer() {
     showErrorFeedback();
   }
 }
-
 
 // Validation Functions
 function checkQuizAnswer(challenge) {
@@ -1033,6 +1300,83 @@ function checkDragDropAnswer(challenge) {
   return allCorrect;
 }
 
+function renderMatchChallenge(challenge) {
+  const container = document.createElement("div");
+  container.className = "match-container";
+
+  const leftCol = document.createElement("div");
+  const rightCol = document.createElement("div");
+  leftCol.className = "match-column left";
+  rightCol.className = "match-column right";
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("match-lines");
+
+  let selectedLeft = null;
+  challenge.userPairs = {};
+
+  challenge.pairs.forEach((pair, i) => {
+    const left = document.createElement("div");
+    left.className = "match-item";
+    left.textContent = pair.left;
+    left.dataset.index = i;
+
+    left.onclick = () => {
+      document.querySelectorAll(".match-item").forEach(x => x.classList.remove("active"));
+      left.classList.add("active");
+      selectedLeft = left;
+    };
+
+    leftCol.appendChild(left);
+  });
+
+  [...challenge.pairs]
+    .sort(() => Math.random() - 0.5)
+    .forEach((pair, i) => {
+      const right = document.createElement("div");
+      right.className = "match-item";
+      right.textContent = pair.right;
+      right.dataset.value = pair.right;
+
+      right.onclick = () => {
+        if (!selectedLeft) return;
+
+        drawLine(svg, selectedLeft, right);
+        challenge.userPairs[selectedLeft.textContent] = right.textContent;
+        selectedLeft.classList.remove("active");
+        selectedLeft = null;
+      };
+
+      rightCol.appendChild(right);
+    });
+
+  container.append(leftCol, svg, rightCol);
+  elements.challengeArea.appendChild(container);
+}
+
+function drawLine(svg, leftEl, rightEl) {
+  const rect1 = leftEl.getBoundingClientRect();
+  const rect2 = rightEl.getBoundingClientRect();
+  const parentRect = svg.getBoundingClientRect();
+
+  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  line.setAttribute("x1", rect1.right - parentRect.left);
+  line.setAttribute("y1", rect1.top + rect1.height / 2 - parentRect.top);
+  line.setAttribute("x2", rect2.left - parentRect.left);
+  line.setAttribute("y2", rect2.top + rect2.height / 2 - parentRect.top);
+  line.setAttribute("stroke", "#4CAF50");
+  line.setAttribute("stroke-width", "2");
+
+  svg.appendChild(line);
+}
+
+function checkMatchAnswer(challenge) {
+  return challenge.pairs.every(
+    p => challenge.userPairs[p.left] === p.right
+  );
+}
+
+
 // Feedback
 function showSuccessModal(points, badge) {
   elements.pointsEarned.textContent = points;
@@ -1052,9 +1396,15 @@ function updateStats() {
 
 // Sandbox functionality
 function initSandbox() {
+  if (!elements.htmlEditor || !elements.preview) {
+    console.warn("HTML sandbox not found, skipping initSandbox()");
+    return;
+  }
+
   elements.htmlEditor.addEventListener('input', updatePreview);
-  updatePreview(); // Initial preview
+  updatePreview();
 }
+
 function updatePreview() {
   const htmlCode = elements.htmlEditor.value;
   const previewDoc = elements.preview.contentDocument || elements.preview.contentWindow.document;
@@ -1134,44 +1484,30 @@ function applySavedProgress(count) {
 async function sendAIMessage() {
   const message = aiChatInput?.value?.trim();
   if (!message) return;
-
-  addMessage("user", message);
-  aiChatInput.value = "";
-
-  // Show typing indicator
+  
+  addMessage('user', message);
+  aiChatInput.value = '';
+  
   aiSendBtn.disabled = true;
-  aiSendBtn.textContent = "AI thinking...";
-  aiChatInput.disabled = true;
-
-  try {
-    // ✅ Call your backend instead of Perplexity directly
-    const response = await fetch("/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "Chat API error");
-    }
-
-    // ✅ Display AI reply from backend
-    addMessage("ai", data.reply);
-
-  } catch (error) {
-    console.error("Chat Error:", error);
-    addMessage("ai", "⚠️ AI temporarily unavailable.");
-  } finally {
+  aiSendBtn.textContent = 'AI thinking...';
+  
+  // HTML-SPECIFIC MOCK AI
+  setTimeout(() => {
+    const htmlReplies = {
+      'hello': 'Hi! Ask me about HTML tags, forms, semantic elements, or your challenges! 🌐',
+      'div': '`<div>` is a block-level container. Use it to group content and apply CSS.',
+      'form': '`<form>` creates input fields. Add `input type="text"`, `button`, `required` attributes!',
+      'default': `Great HTML question about "${message}"! Check Reference tab or Sandbox. 💻`
+    };
+    const reply = htmlReplies[message.toLowerCase()] || htmlReplies.default;
+    addMessage('ai', reply);
+    
     aiSendBtn.disabled = false;
-    aiSendBtn.textContent = "Send";
-    aiChatInput.disabled = false;
+    aiSendBtn.textContent = 'Send';
     aiChatInput.focus();
-  }
+  }, 1000);
 }
+
 
 // --- MESSAGE RENDERER ---
 function addMessage(sender, text) {
@@ -1199,7 +1535,7 @@ function initGame() {
   initEventListeners();
   initSandbox();
   updateStats();
-
+  initAIChat();
 
   // Initial render
   renderLevels();

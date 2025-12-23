@@ -1996,3 +1996,46 @@ body.ai-chat-open main {
     margin-right: 0;
   }
 }
+
+.match-container {
+  display: flex;
+  position: relative;
+  gap: 30px;
+}
+
+.match-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.match-item {
+  padding: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background: #000000;
+  border-radius: 6px;
+}
+
+.match-item.active {
+  background: #e3f2fd;
+  border-color: #2196F3;
+}
+
+.match-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ai-chat-panel.hidden {
+  transform: translateX(100%) !important;
+  opacity: 0 !important;
+}
+
+.ai-chat-panel {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 0.3s ease;
+}

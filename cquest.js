@@ -59,7 +59,45 @@ async function loadProgress(email) {
     applySavedProgress(0);
     renderLevels();
   }
+} async function loadProgress(email) {
+  try {
+    const res = await fetch(`http://localhost:3000/profile/${email}`);
+    const data = await res.json();
+
+    if (data.success) {
+      user = data.user;
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // ✅ APPLY SAVED CHALLENGE PROGRESS
+      const savedCount =
+        activeQuest === "c"
+          ? (user.progress.c || 0)
+          : (user.progress.html || 0);
+
+      applySavedProgress(savedCount);
+
+      // ✅ APPLY SAVED BADGES
+      const savedBadges = user.progress.badges || [];
+
+      gameState.badges.forEach(badge => {
+        if (savedBadges.includes(badge.name)) {
+          badge.earned = true;
+        }
+      });
+
+      // ✅ UPDATE BADGE COUNT
+      gameState.playerStats.badgesEarned =
+        gameState.badges.filter(b => b.earned).length;
+
+      updateStats();
+      renderLevels();
+      renderBadges();
+    }
+  } catch (e) {
+    console.error("Load progress error:", e);
+  }
 }
+
 
 // ================================
 // Profile circle -> centered modal showing live details
@@ -223,7 +261,7 @@ class GameState {
             id: 9,
             title: "Variable Concept",
             type: "wh-question",
-            description: "What is a variable in C?",
+            description: "Variable in C is used for and what?",
             keywords: ["store", "value"],
             points: 50,
             completed: false
@@ -654,19 +692,41 @@ class GameState {
   }
 
   checkBadges() {
-    const completedChallenges = this.levels.flatMap(l => l.challenges).filter(c => c.completed);
-    const completedLevels = this.levels.filter(l => l.completed);
+    const completedCount = this.levels.reduce(
+      (sum, lvl) => sum + lvl.challenges.filter(c => c.completed).length,
+      0
+    );
 
-    if (completedChallenges.length >= 1 && !this.badges[0].earned) {
-      this.badges[0].earned = true; this.playerStats.badgesEarned++; return this.badges[0];
-    }
-    if (completedLevels.length >= 1 && !this.badges[1].earned) {
-      this.badges[1].earned = true; this.playerStats.badgesEarned++; return this.badges[1];
-    }
-    if (completedLevels.length === this.levels.length && !this.badges[4].earned) {
-      this.badges[4].earned = true; this.playerStats.badgesEarned++; return this.badges[4];
-    }
-    return null;
+    let newlyEarned = null;
+
+    const unlock = (index) => {
+      if (!this.badges[index].earned) {
+        this.badges[index].earned = true;
+        this.playerStats.badgesEarned++;
+        newlyEarned = this.badges[index];
+      }
+    };
+
+    // 🥾 After 1 challenge
+    if (completedCount >= 1) unlock(0);
+
+    // 🔄 After 20 challenges
+    if (completedCount >= 20) unlock(1);
+
+    // 📌 After 30 challenges
+    if (completedCount >= 30) unlock(2);
+
+    // 🧩 After 42 challenges
+    if (completedCount >= 42) unlock(3);
+
+    // 👑 C Expert → only if all others earned
+    const allPreviousEarned = this.badges
+      .slice(0, 4)
+      .every(b => b.earned);
+
+    if (allPreviousEarned) unlock(4);
+
+    return newlyEarned;
   }
 
   completeChallenge(challengeId, points) {
@@ -716,6 +776,16 @@ const elements = {
   gameSections: document.querySelectorAll('.game-section')
 };
 
+// ================================
+// AI Chat Elements - FIXED
+// ================================
+const aiChatInput = document.getElementById("aiChatInput");
+const aiSendBtn = document.getElementById("aiSendBtn");
+const aiChatMessages = document.getElementById("aiChatMessages");
+const aiChatToggle = document.getElementById("aiChatBtn");     // ✅ Matches HTML
+const aiChatBox = document.getElementById("aiChatPanel");      // ✅ Matches HTML
+
+
 // Navigation
 function initNavigation() {
   elements.navTabs.forEach(tab => {
@@ -725,6 +795,55 @@ function initNavigation() {
     });
   });
 }
+
+function initAIChat() {
+  console.log('🔧 Initializing AI Chat...');
+  
+  if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
+    console.error('❌ AI Chat: Required elements missing');
+    return;
+  }
+
+  // Send message
+  aiSendBtn.addEventListener('click', sendAIMessage);
+  aiChatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendAIMessage();
+    }
+  });
+
+  // ✅ FIX: Toggle .active class (matches your CSS)
+  if (aiChatToggle && aiChatBox) {
+    aiChatToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('🖱️ Chat button clicked!');
+      
+      if (aiChatBox.classList.contains('active')) {
+        aiChatBox.classList.remove('active');
+        document.body.classList.remove('ai-chat-open');
+      } else {
+        aiChatBox.classList.add('active');
+        document.body.classList.add('ai-chat-open');
+        aiChatInput.focus();
+      }
+    });
+  }
+
+  // Close button
+  const closeAiChatBtn = document.getElementById("closeAiChat");
+  if (closeAiChatBtn && aiChatBox) {
+    closeAiChatBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      aiChatBox.classList.remove('active');
+      document.body.classList.remove('ai-chat-open');
+    });
+  }
+
+  console.log('✅ AI Chat initialized with .active toggle!');
+}
+
+
 
 function switchSection(sectionName) {
   // Update active tab
@@ -838,6 +957,13 @@ function openChallenge(challenge) {
     case 'drag-drop':
       renderDragDropChallenge(challenge);
       break;
+    case 'match':
+      renderMatchChallenge(challenge);
+      break;
+    case 'wh-question':
+      renderWhQuestionChallenge(challenge);
+      break;
+
   }
 
   elements.challengeModal.classList.add('active');
@@ -964,6 +1090,47 @@ function handleDrop(e) {
   }
 }
 
+function renderWhQuestionChallenge(challenge) {
+  const container = document.createElement("div");
+  container.className = "wh-question-container";
+
+  container.innerHTML = `
+    <textarea 
+      class="wh-answer"
+      rows="5"
+      placeholder="Type your answer here..."
+    ></textarea>
+  `;
+
+  elements.challengeArea.appendChild(container);
+}
+
+
+function checkWhQuestionAnswer(challenge) {
+  const textarea = document.querySelector(".wh-answer");
+  if (!textarea) return false;
+
+  const userAnswer = textarea.value.toLowerCase();
+
+  let matchCount = 0;
+
+  challenge.keywords.forEach(keyword => {
+    if (userAnswer.includes(keyword.toLowerCase())) {
+      matchCount++;
+    }
+  });
+
+  // ✅ Require at least 1 keywords
+  const isCorrect = matchCount >= 1;
+
+  textarea.classList.add(
+    isCorrect ? "success-feedback" : "error-feedback"
+  );
+
+  return isCorrect;
+}
+
+
 
 // Answer Submission
 function submitAnswer() {
@@ -985,6 +1152,13 @@ function submitAnswer() {
     case 'drag-drop':
       isCorrect = checkDragDropAnswer(challenge);
       break;
+    case 'match':
+      isCorrect = checkMatchAnswer(challenge);
+      break;
+    case 'wh-question':
+      isCorrect = checkWhQuestionAnswer(challenge);
+      break;
+
   }
 
 
@@ -1050,6 +1224,83 @@ function checkDragDropAnswer(challenge) {
   });
   return allCorrect;
 }
+
+function renderMatchChallenge(challenge) {
+  const container = document.createElement("div");
+  container.className = "match-container";
+
+  const leftCol = document.createElement("div");
+  const rightCol = document.createElement("div");
+  leftCol.className = "match-column left";
+  rightCol.className = "match-column right";
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("match-lines");
+
+  let selectedLeft = null;
+  challenge.userPairs = {};
+
+  challenge.pairs.forEach((pair, i) => {
+    const left = document.createElement("div");
+    left.className = "match-item";
+    left.textContent = pair.left;
+    left.dataset.index = i;
+
+    left.onclick = () => {
+      document.querySelectorAll(".match-item").forEach(x => x.classList.remove("active"));
+      left.classList.add("active");
+      selectedLeft = left;
+    };
+
+    leftCol.appendChild(left);
+  });
+
+  [...challenge.pairs]
+    .sort(() => Math.random() - 0.5)
+    .forEach((pair, i) => {
+      const right = document.createElement("div");
+      right.className = "match-item";
+      right.textContent = pair.right;
+      right.dataset.value = pair.right;
+
+      right.onclick = () => {
+        if (!selectedLeft) return;
+
+        drawLine(svg, selectedLeft, right);
+        challenge.userPairs[selectedLeft.textContent] = right.textContent;
+        selectedLeft.classList.remove("active");
+        selectedLeft = null;
+      };
+
+      rightCol.appendChild(right);
+    });
+
+  container.append(leftCol, svg, rightCol);
+  elements.challengeArea.appendChild(container);
+}
+
+function drawLine(svg, leftEl, rightEl) {
+  const rect1 = leftEl.getBoundingClientRect();
+  const rect2 = rightEl.getBoundingClientRect();
+  const parentRect = svg.getBoundingClientRect();
+
+  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  line.setAttribute("x1", rect1.right - parentRect.left);
+  line.setAttribute("y1", rect1.top + rect1.height / 2 - parentRect.top);
+  line.setAttribute("x2", rect2.left - parentRect.left);
+  line.setAttribute("y2", rect2.top + rect2.height / 2 - parentRect.top);
+  line.setAttribute("stroke", "#4CAF50");
+  line.setAttribute("stroke-width", "2");
+
+  svg.appendChild(line);
+}
+
+function checkMatchAnswer(challenge) {
+  return challenge.pairs.every(
+    p => challenge.userPairs[p.left] === p.right
+  );
+}
+
 
 // Feedback
 function showSuccessModal(points, badge) {
@@ -1151,40 +1402,33 @@ function applySavedProgress(count) {
 async function sendAIMessage() {
   const message = aiChatInput?.value?.trim();
   if (!message) return;
-
-  addMessage("user", message);
-  aiChatInput.value = "";
-
-  // Show typing indicator
+  
+  addMessage('user', message);
+  aiChatInput.value = '';
+  
   aiSendBtn.disabled = true;
-  aiSendBtn.textContent = "AI thinking...";
+  aiSendBtn.textContent = 'AI thinking...';
   aiChatInput.disabled = true;
-
+  
   try {
-    // ✅ Call your backend instead of Perplexity directly
-    const response = await fetch("/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+    const response = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
     });
-
     const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "Chat API error");
+    
+    if (data.success) {
+      addMessage('ai', data.reply);
+    } else {
+      throw new Error(data.message);
     }
-
-    // ✅ Display AI reply from backend
-    addMessage("ai", data.reply);
-
   } catch (error) {
-    console.error("Chat Error:", error);
-    addMessage("ai", "⚠️ AI temporarily unavailable.");
+    console.error('Chat Error:', error);
+    addMessage('ai', 'AI temporarily unavailable. Try again!');
   } finally {
     aiSendBtn.disabled = false;
-    aiSendBtn.textContent = "Send";
+    aiSendBtn.textContent = 'Send';
     aiChatInput.disabled = false;
     aiChatInput.focus();
   }
@@ -1216,12 +1460,11 @@ function initGame() {
   initEventListeners();
   initSandbox();
   updateStats();
-
-
   // Initial render
   renderLevels();
   renderBadges();
   renderReference();
+  initAIChat();
 
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   if (user?.email) {
