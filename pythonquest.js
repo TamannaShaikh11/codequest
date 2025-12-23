@@ -838,50 +838,34 @@ function initNavigation() {
 }
 
 function initAIChat() {
-    console.log('🔧 Initializing AI Chat...');
+  console.log("✅ initAIChat running");
 
-    if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
-        console.error('❌ AI Chat: Required elements missing');
-        return;
+  if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
+    console.error("❌ AI Chat elements missing");
+    return;
+  }
+
+  aiSendBtn.addEventListener("click", sendAIMessage);
+
+  aiChatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendAIMessage();
     }
+  });
 
-    // Send message
-    aiSendBtn.addEventListener('click', sendAIMessage);
-    aiChatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendAIMessage();
-        }
+  if (aiChatToggle && aiChatBox) {
+    aiChatToggle.addEventListener("click", () => {
+      aiChatBox.classList.toggle("active");
     });
+  }
 
-    // ✅ FIX: Toggle .active class (matches your CSS)
-    if (aiChatToggle && aiChatBox) {
-        aiChatToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('🖱️ Chat button clicked!');
-
-            if (aiChatBox.classList.contains('active')) {
-                aiChatBox.classList.remove('active');
-                document.body.classList.remove('ai-chat-open');
-            } else {
-                aiChatBox.classList.add('active');
-                document.body.classList.add('ai-chat-open');
-                aiChatInput.focus();
-            }
-        });
-    }
-
-    // Close button
-    const closeAiChatBtn = document.getElementById("closeAiChat");
-    if (closeAiChatBtn && aiChatBox) {
-        closeAiChatBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            aiChatBox.classList.remove('active');
-            document.body.classList.remove('ai-chat-open');
-        });
-    }
-
-    console.log('✅ AI Chat initialized with .active toggle!');
+  const closeBtn = document.getElementById("closeAiChat");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      aiChatBox.classList.remove("active");
+    });
+  }
 }
 
 
@@ -1470,35 +1454,37 @@ function applySavedProgress(count) {
 
 /// --- FRONTEND CHAT FUNCTION ---
 async function sendAIMessage() {
-    const message = aiChatInput?.value?.trim();
-    if (!message) return;
+  console.log("📤 Sending AI message");
 
-    addMessage('user', message);
-    aiChatInput.value = '';
+  const message = aiChatInput.value.trim();
+  if (!message) return;
 
-    aiSendBtn.disabled = true;
-    aiSendBtn.textContent = 'AI thinking...';
-    aiChatInput.disabled = true;
+  aiChatMessages.innerHTML += `
+    <div class="user-msg">${message}</div>
+  `;
+  aiChatInput.value = "";
 
-    // C-SPECIFIC MOCK AI (works instantly!)
-    setTimeout(() => {
-        const cReplies = {
-            'hello': 'Hi! Ask me about C programming, printf, loops, pointers, or your challenges! 🚀',
-            'printf': 'printf() prints formatted output. Use %d (int), %s (string), %f (float), %c (char)!',
-            'loop': 'C loops: for (fixed iterations), while (condition), do-while (runs once first)',
-            'pointer': '*ptr gets value at address. &var gets address of var. int *p = &x;',
-            'array': 'Arrays: int arr[5] = {1,2,3,4,5}; Access: arr[0], arr[1]...',
-            'default': `Great C question about "${message}"! Check Reference tab or Sandbox to test it. 💻`
-        };
+  try {
+    const res = await fetch("http://localhost:3000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
 
-        const reply = cReplies[message.toLowerCase()] || cReplies.default;
-        addMessage('ai', reply);
+    const data = await res.json();
+    console.log("📥 AI response:", data);
 
-        aiSendBtn.disabled = false;
-        aiSendBtn.textContent = 'Send';
-        aiChatInput.disabled = false;
-        aiChatInput.focus();
-    }, 1200); // 1.2s delay for realistic feel
+    aiChatMessages.innerHTML += `
+      <div class="ai-msg">${data.reply}</div>
+    `;
+  } catch (err) {
+    console.error("❌ AI fetch failed", err);
+    aiChatMessages.innerHTML += `
+      <div class="ai-msg">AI not responding</div>
+    `;
+  }
+
+  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
 }
 
 
@@ -1532,7 +1518,7 @@ function initGame() {
     renderLevels();
     renderBadges();
     renderReference();
-    initAIChat();
+    
 
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (user?.email) {
@@ -1547,5 +1533,6 @@ function initGame() {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize gameState FIRST
     window.gameState = new GameState();
+    initAIChat();
     initGame();
 });

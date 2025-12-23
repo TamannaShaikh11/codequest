@@ -87,6 +87,7 @@ const userEmailEl = document.getElementById("userEmail");
 const userStarsEl = document.getElementById("userStars");
 const userHtmlEl = document.getElementById("userHtml");
 const userCEl = document.getElementById("userC");
+const userPythonEl = document.getElementById("userPython");
 const userBadgesEl = document.getElementById("userBadges");
 
 // Show initial in circle (use current user from localStorage)
@@ -111,6 +112,7 @@ if (profileCircle) {
         userStarsEl.textContent = u.progress.stars;
         userHtmlEl.textContent = u.progress.html;
         userCEl.textContent = u.progress.c;
+        userPythonEl.textContent = u.progress.python;
         userBadgesEl.textContent = (u.progress.badges || []).join(", ");
       }
       overlay.classList.remove("hidden");
@@ -872,52 +874,35 @@ function initNavigation() {
 }
 
 function initAIChat() {
-  console.log('🔧 Initializing HTML Quest AI Chat...');
-  
+  console.log("✅ initAIChat running");
+
   if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
-    console.error('❌ HTML AI Chat: Required elements missing');
+    console.error("❌ AI Chat elements missing");
     return;
   }
 
-  // Send + Enter key
-  aiSendBtn.addEventListener('click', sendAIMessage);
-  aiChatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  aiSendBtn.addEventListener("click", sendAIMessage);
+
+  aiChatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendAIMessage();
     }
   });
 
-  // ✅ Toggle .active (matches your CSS)
   if (aiChatToggle && aiChatBox) {
-    aiChatToggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('🖱️ HTML Chat button clicked!');
-      
-      if (aiChatBox.classList.contains('active')) {
-        aiChatBox.classList.remove('active');
-        document.body.classList.remove('ai-chat-open');
-      } else {
-        aiChatBox.classList.add('active');
-        document.body.classList.add('ai-chat-open');
-        aiChatInput.focus();
-      }
+    aiChatToggle.addEventListener("click", () => {
+      aiChatBox.classList.toggle("active");
     });
   }
 
-  // Close button
-  const closeAiChatBtn = document.getElementById("closeAiChat");
-  if (closeAiChatBtn) {
-    closeAiChatBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      aiChatBox.classList.remove('active');
-      document.body.classList.remove('ai-chat-open');
+  const closeBtn = document.getElementById("closeAiChat");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      aiChatBox.classList.remove("active");
     });
   }
-
-  console.log('✅ HTML AI Chat initialized!');
 }
-
 
 function switchSection(sectionName) {
   // Update active tab
@@ -1482,30 +1467,37 @@ function applySavedProgress(count) {
 
 /// --- FRONTEND CHAT FUNCTION ---
 async function sendAIMessage() {
-  const message = aiChatInput?.value?.trim();
+  console.log("📤 Sending AI message");
+
+  const message = aiChatInput.value.trim();
   if (!message) return;
-  
-  addMessage('user', message);
-  aiChatInput.value = '';
-  
-  aiSendBtn.disabled = true;
-  aiSendBtn.textContent = 'AI thinking...';
-  
-  // HTML-SPECIFIC MOCK AI
-  setTimeout(() => {
-    const htmlReplies = {
-      'hello': 'Hi! Ask me about HTML tags, forms, semantic elements, or your challenges! 🌐',
-      'div': '`<div>` is a block-level container. Use it to group content and apply CSS.',
-      'form': '`<form>` creates input fields. Add `input type="text"`, `button`, `required` attributes!',
-      'default': `Great HTML question about "${message}"! Check Reference tab or Sandbox. 💻`
-    };
-    const reply = htmlReplies[message.toLowerCase()] || htmlReplies.default;
-    addMessage('ai', reply);
-    
-    aiSendBtn.disabled = false;
-    aiSendBtn.textContent = 'Send';
-    aiChatInput.focus();
-  }, 1000);
+
+  aiChatMessages.innerHTML += `
+    <div class="user-msg">${message}</div>
+  `;
+  aiChatInput.value = "";
+
+  try {
+    const res = await fetch("http://localhost:3000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await res.json();
+    console.log("📥 AI response:", data);
+
+    aiChatMessages.innerHTML += `
+      <div class="ai-msg">${data.reply}</div>
+    `;
+  } catch (err) {
+    console.error("❌ AI fetch failed", err);
+    aiChatMessages.innerHTML += `
+      <div class="ai-msg">AI not responding</div>
+    `;
+  }
+
+  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
 }
 
 
@@ -1534,10 +1526,7 @@ function initGame() {
   initNavigation();
   initEventListeners();
   initSandbox();
-  updateStats();
-  initAIChat();
-
-  // Initial render
+  updateStats();// Initial render
   renderLevels();
   renderBadges();
   renderReference();
@@ -1555,5 +1544,6 @@ function initGame() {
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize gameState FIRST
   window.gameState = new GameState();
+  initAIChat();
   initGame();
 });
