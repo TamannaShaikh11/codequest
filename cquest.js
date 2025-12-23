@@ -1410,29 +1410,27 @@ async function sendAIMessage() {
   aiSendBtn.textContent = 'AI thinking...';
   aiChatInput.disabled = true;
   
-  try {
-    const response = await fetch('/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
-    });
-    const data = await response.json();
+  // C-SPECIFIC MOCK AI (works instantly!)
+  setTimeout(() => {
+    const cReplies = {
+      'hello': 'Hi! Ask me about C programming, printf, loops, pointers, or your challenges! 🚀',
+      'printf': 'printf() prints formatted output. Use %d (int), %s (string), %f (float), %c (char)!',
+      'loop': 'C loops: for (fixed iterations), while (condition), do-while (runs once first)',
+      'pointer': '*ptr gets value at address. &var gets address of var. int *p = &x;',
+      'array': 'Arrays: int arr[5] = {1,2,3,4,5}; Access: arr[0], arr[1]...',
+      'default': `Great C question about "${message}"! Check Reference tab or Sandbox to test it. 💻`
+    };
     
-    if (data.success) {
-      addMessage('ai', data.reply);
-    } else {
-      throw new Error(data.message);
-    }
-  } catch (error) {
-    console.error('Chat Error:', error);
-    addMessage('ai', 'AI temporarily unavailable. Try again!');
-  } finally {
+    const reply = cReplies[message.toLowerCase()] || cReplies.default;
+    addMessage('ai', reply);
+    
     aiSendBtn.disabled = false;
     aiSendBtn.textContent = 'Send';
     aiChatInput.disabled = false;
     aiChatInput.focus();
-  }
+  }, 1200); // 1.2s delay for realistic feel
 }
+
 
 // --- MESSAGE RENDERER ---
 function addMessage(sender, text) {
