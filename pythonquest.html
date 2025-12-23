@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Quest - Learn Python Through Gaming</title>
+    <link rel="stylesheet" href="cquest.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="game-header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="game-title">
+                    <span class="title-icon">🐍</span>
+                    Python Quest
+                </h1>
+                <div class="player-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value" id="totalPoints">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🏆</span>
+                        <span class="stat-value" id="badgeCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🔥</span>
+                        <span class="stat-value" id="streakCount">0</span>
+                    </div>
+                    <!-- Profile Circle -->
+                    <div id="profileCircle"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay + Profile Modal -->
+    <div id="overlay" class="hidden"></div>
+    <div id="userModal" class="hidden">
+        <h2>User Profile</h2>
+        <p><strong>Name:</strong> <span id="userName"></span></p>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Stars:</strong> <span id="userStars"></span></p>
+        <p><strong>Python Progress:</strong> <span id="userPython"></span></p>
+        <p><strong>HTML Progress:</strong> <span id="userHtml"></span></p>
+        <p><strong>C Progress:</strong> <span id="userC"></span></p>
+        <p><strong>Badges:</strong> <span id="userBadges"></span></p>
+        <button id="closeProfileModal">Close</button>
+    </div>
+
+    <!-- Main Game Area -->
+    <main class="game-main">
+        <div class="container">
+            <!-- Navigation Tabs -->
+            <nav class="game-nav">
+                <button class="nav-tab active" data-tab="levels">Levels</button>
+                <button class="nav-tab" data-tab="sandbox">Sandbox</button>
+                <button class="nav-tab" data-tab="achievements">Achievements</button>
+                <button class="nav-tab" data-tab="reference">Reference</button>
+                <button class="nav-tab" data-tab="leaderboard">Leaderboard</button>
+            </nav>
+
+            <!-- Levels Section -->
+            <section id="levels-section" class="game-section active">
+                <div class="levels-grid" id="levelsGrid">
+                    <!-- Levels will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Challenge Modal -->
+            <div id="challengeModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="challengeTitle">Challenge Title</h2>
+                        <button class="close-btn" id="closeModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="challengeDescription">Challenge description</p>
+                        <div id="challengeArea">
+                            <!-- Challenge content will be dynamically generated -->
+                        </div>
+                        <div class="challenge-actions">
+                            <button class="btn btn--primary" id="submitAnswer">Submit Answer</button>
+                            <button class="btn btn--secondary" id="showHint">Show Hint</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sandbox Section -->
+            <section id="sandbox-section" class="game-section">
+                <div class="sandbox-container">
+                    <div class="sandbox-header">
+                        <h2>Python Sandbox</h2>
+                        <p>Practice Python code and see output</p>
+                    </div>
+
+                    <div class="sandbox-content">
+                        <div class="code-panel">
+                            <h3>Python Code</h3>
+                            <textarea id="pyEditor" class="code-editor" placeholder="Type your Python code here...">
+print("Hello, Python Quest!")
+              </textarea>
+                        </div>
+
+                        <div class="preview-panel">
+                            <h3>Output</h3>
+                            <pre id="pyOutput" class="preview-frame"></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Achievements Section -->
+            <section id="achievements-section" class="game-section">
+                <div class="achievements-header">
+                    <h2>Your Achievements</h2>
+                    <p>Collect badges by completing challenges and reaching milestones</p>
+                </div>
+                <div class="badges-grid" id="badgesGrid">
+                    <!-- Badges will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Reference Section -->
+            <section id="reference-section" class="game-section">
+                <div class="reference-header">
+                    <h2>Python Reference Guide</h2>
+                    <p>Quick reference for Python syntax and functions</p>
+                </div>
+                <div class="reference-content" id="referenceContent">
+                    <!-- Reference content will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Leaderboard Section -->
+            <section id="leaderboard-section" class="game-section">
+                <div class="leaderboard-header">
+                    <h2>Leaderboard</h2>
+                    <p>See how you rank among other players and track top scores</p>
+                </div>
+                <div class="leaderboard-grid" id="leaderboardGrid">
+                    <!-- Leaderboard entries will be dynamically generated -->
+                </div>
+            </section>
+
+            <!-- Advanced Challenges Section -->
+            <section id="advanced-section" class="game-section locked">
+                <div class="advanced-header">
+                    <h2>Advanced Challenges</h2>
+                    <p>
+                        Unlocks only after completing all levels.
+                        Solve multi-step, time-based programming problems.
+                    </p>
+                </div>
+
+                <div class="advanced-grid" id="advancedGrid">
+                    <!-- Advanced challenges will be dynamically generated -->
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">🎉</div>
+            <h2 id="successTitle">Congratulations!</h2>
+            <p id="successMessage">You've completed the challenge!</p>
+            <div class="success-stats">
+                <div class="success-stat">
+                    <span>Points Earned:</span>
+                    <span id="pointsEarned">0</span>
+                </div>
+                <div class="success-stat" id="badgeEarned" style="display: none;">
+                    <span>Badge Unlocked:</span>
+                    <span id="badgeName"></span>
+                </div>
+            </div>
+            <button class="btn btn--primary" id="continueBtn">Continue</button>
+        </div>
+    </div>
+
+    <!-- Drag & Drop Area -->
+    <div id="dragDropArea" class="drag-drop-container" style="display: none;">
+        <div class="drop-zones" id="dropZones">
+            <!-- Drop zones will be dynamically created -->
+        </div>
+        <div class="draggable-items" id="draggableItems">
+            <!-- Draggable items will be dynamically created -->
+        </div>
+    </div>
+
+    <!-- AI Chatbot Button (Floating) -->
+    <button id="aiChatBtn" class="ai-chat-btn" title="Ask AI">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </button>
+
+    <!-- AI Chatbot Panel (Right Sidebar - Hidden by default) -->
+    <div id="aiChatPanel" class="ai-chat-panel">
+        <div class="ai-chat-header">
+            <h3>AI Assistant</h3>
+            <button id="closeAiChat" class="close-chat-btn">×</button>
+        </div>
+        <div id="aiChatMessages" class="ai-chat-messages"></div>
+        <div class="ai-chat-input">
+            <input type="text" id="aiChatInput" placeholder="Ask about C programming, challenges, or game help..." />
+            <button id="aiSendBtn">Send</button>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div id="aiChatOverlay" class="ai-chat-overlay hidden"></div>
+
+
+    <script src="pythonquest.js"></script>
+</body>
+
+</html>
