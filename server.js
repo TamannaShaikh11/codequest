@@ -50,17 +50,17 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    if (user.password !== password) {
-      return res.status(401).json({ success: false, message: "Incorrect password" });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-
-    res.json({ success: true, user });
+    if (user.password !== password) {
+      return res.status(401).json({ success: false, message: 'Incorrect password' });
+    }
+    res.json({ success: true, message: 'Login successful', user });  // Added message
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

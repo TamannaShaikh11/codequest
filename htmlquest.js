@@ -1421,7 +1421,7 @@ function initEventListeners() {
 
   if (elements.showHint) {
     elements.showHint.addEventListener('click', () => {
-      alert('Hint: Check the C Reference Guide for syntax examples!');
+      alert('Hint: Check the HTML Reference Guide for syntax examples!');
     });
   }
 }
