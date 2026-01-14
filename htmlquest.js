@@ -15,6 +15,36 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;");
 }
 
+async function loadLeaderboard(quest = "html") {
+      try {
+        const res = await fetch(`http://localhost:3000/leaderboard/${quest}`);
+        const leaders = await res.json();
+
+        const grid = document.getElementById('leaderboardGrid');
+
+        if (!Array.isArray(leaders) || leaders.length === 0) {
+          grid.innerHTML = "<p>No leaderboard data available.</p>";
+          return;
+        }
+
+        grid.innerHTML = leaders.map((l, i) => {
+          const name = l.name || "Unknown User";
+          const levels = l.progress?.[quest] ?? 0;
+          return `
+        <div class="leaderboard-item">
+          <span>${i + 1}. ${name}</span>
+          <span>${levels} levels</span>
+        </div>
+      `;
+        }).join('');
+      } catch (err) {
+        console.error("Error loading leaderboard:", err);
+        document.getElementById('leaderboardGrid').innerHTML =
+          "<p>Unable to load leaderboard at the moment.</p>";
+      }
+    }
+
+    loadLeaderboard("html"); // or "c"
 
 // --- Backend helpers ---
 async function saveProgress(email, quest, levelValue, stars, badge) {
@@ -721,36 +751,7 @@ id – unique identifier
     this.playerStats = { totalPoints: 0, streak: 0, badgesEarned: 0 };
     this.currentChallenge = null;
 
-    async function loadLeaderboard(quest = "html") {
-      try {
-        const res = await fetch(`http://localhost:3000/leaderboard/${quest}`);
-        const leaders = await res.json();
-
-        const grid = document.getElementById('leaderboardGrid');
-
-        if (!Array.isArray(leaders) || leaders.length === 0) {
-          grid.innerHTML = "<p>No leaderboard data available.</p>";
-          return;
-        }
-
-        grid.innerHTML = leaders.map((l, i) => {
-          const name = l.name || "Unknown User";
-          const levels = l.progress?.[quest] ?? 0;
-          return `
-        <div class="leaderboard-item">
-          <span>${i + 1}. ${name}</span>
-          <span>${levels} levels</span>
-        </div>
-      `;
-        }).join('');
-      } catch (err) {
-        console.error("Error loading leaderboard:", err);
-        document.getElementById('leaderboardGrid').innerHTML =
-          "<p>Unable to load leaderboard at the moment.</p>";
-      }
-    }
-
-    loadLeaderboard("html"); // or "c"
+    
   }
 
 
@@ -905,21 +906,22 @@ function initAIChat() {
 }
 
 function switchSection(sectionName) {
-  // Update active tab
-  elements.navTabs.forEach(tab => {
-    tab.classList.toggle('active', tab.dataset.tab === sectionName);
-  });
+    elements.navTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === sectionName);
+    });
 
-  // Update active section
-  elements.gameSections.forEach(section => {
-    section.classList.toggle('active', section.id === `${sectionName}-section`);
-  });
+    elements.gameSections.forEach(section => {
+        section.classList.toggle('active', section.id === `${sectionName}-section`);
+    });
 
-  // Section-specific rendering
-  if (sectionName === 'levels') renderLevels();
-  else if (sectionName === 'achievements') renderBadges();
-  else if (sectionName === 'reference') renderReference();
+    if (sectionName === 'levels') renderLevels();
+    else if (sectionName === 'achievements') renderBadges();
+    else if (sectionName === 'reference') renderReference();
+    else if (sectionName === 'leaderboard') {
+        loadLeaderboard("html"); // ✅ live fetch every time
+    }
 }
+
 // ================================
 // C Quest - Rendering Functions
 // ================================
@@ -1239,6 +1241,7 @@ function submitAnswer() {
         challenge.points,
         badge?.name || null
       );
+      loadLeaderboard(quest);
     }
   } else {
     showErrorFeedback();

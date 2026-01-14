@@ -33,6 +33,37 @@ async function saveProgress(email, quest, levelValue, stars, badge) {
     }
 }
 
+async function loadLeaderboard(quest = "python") {
+    try {
+        const res = await fetch(`http://localhost:3000/leaderboard/${quest}`);
+        const leaders = await res.json();
+
+        const grid = document.getElementById('leaderboardGrid');
+
+        if (!Array.isArray(leaders) || leaders.length === 0) {
+            grid.innerHTML = "<p>No leaderboard data available.</p>";
+            return;
+        }
+
+        grid.innerHTML = leaders.map((l, i) => {
+            const name = l.name || "Unknown User";
+            const levels = l.progress?.[quest] ?? 0;
+            return `
+        <div class="leaderboard-item">
+          <span>${i + 1}. ${name}</span>
+          <span>${levels} levels</span>
+        </div>
+      `;
+        }).join('');
+    } catch (err) {
+        console.error("Error loading leaderboard:", err);
+        document.getElementById('leaderboardGrid').innerHTML =
+            "<p>Unable to load leaderboard at the moment.</p>";
+    }
+}
+
+loadLeaderboard("python"); // or "c"
+
 // --- Load Progress from backend and apply to game ---
 async function loadProgress(email) {
     try {
@@ -685,36 +716,7 @@ class GameState {
         this.playerStats = { totalPoints: 0, streak: 0, badgesEarned: 0 };
         this.currentChallenge = null;
 
-        async function loadLeaderboard(quest = "python") {
-            try {
-                const res = await fetch(`http://localhost:3000/leaderboard/${quest}`);
-                const leaders = await res.json();
 
-                const grid = document.getElementById('leaderboardGrid');
-
-                if (!Array.isArray(leaders) || leaders.length === 0) {
-                    grid.innerHTML = "<p>No leaderboard data available.</p>";
-                    return;
-                }
-
-                grid.innerHTML = leaders.map((l, i) => {
-                    const name = l.name || "Unknown User";
-                    const levels = l.progress?.[quest] ?? 0;
-                    return `
-        <div class="leaderboard-item">
-          <span>${i + 1}. ${name}</span>
-          <span>${levels} levels</span>
-        </div>
-      `;
-                }).join('');
-            } catch (err) {
-                console.error("Error loading leaderboard:", err);
-                document.getElementById('leaderboardGrid').innerHTML =
-                    "<p>Unable to load leaderboard at the moment.</p>";
-            }
-        }
-
-        loadLeaderboard("python"); // or "c"
     }
 
 
@@ -838,53 +840,54 @@ function initNavigation() {
 }
 
 function initAIChat() {
-  console.log("✅ initAIChat running");
+    console.log("✅ initAIChat running");
 
-  if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
-    console.error("❌ AI Chat elements missing");
-    return;
-  }
-
-  aiSendBtn.addEventListener("click", sendAIMessage);
-
-  aiChatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendAIMessage();
+    if (!aiSendBtn || !aiChatInput || !aiChatMessages) {
+        console.error("❌ AI Chat elements missing");
+        return;
     }
-  });
 
-  if (aiChatToggle && aiChatBox) {
-    aiChatToggle.addEventListener("click", () => {
-      aiChatBox.classList.toggle("active");
-    });
-  }
+    aiSendBtn.addEventListener("click", sendAIMessage);
 
-  const closeBtn = document.getElementById("closeAiChat");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      aiChatBox.classList.remove("active");
+    aiChatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendAIMessage();
+        }
     });
-  }
+
+    if (aiChatToggle && aiChatBox) {
+        aiChatToggle.addEventListener("click", () => {
+            aiChatBox.classList.toggle("active");
+        });
+    }
+
+    const closeBtn = document.getElementById("closeAiChat");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+            aiChatBox.classList.remove("active");
+        });
+    }
 }
 
 
 function switchSection(sectionName) {
-  // Update active tab
-  elements.navTabs.forEach(tab => {
-    tab.classList.toggle('active', tab.dataset.tab === sectionName);
-  });
+    elements.navTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === sectionName);
+    });
 
-  // Update active section
-  elements.gameSections.forEach(section => {
-    section.classList.toggle('active', section.id === `${sectionName}-section`);
-  });
+    elements.gameSections.forEach(section => {
+        section.classList.toggle('active', section.id === `${sectionName}-section`);
+    });
 
-  // Section-specific rendering
-  if (sectionName === 'levels') renderLevels();
-  else if (sectionName === 'achievements') renderBadges();
-  else if (sectionName === 'reference') renderReference();
+    if (sectionName === 'levels') renderLevels();
+    else if (sectionName === 'achievements') renderBadges();
+    else if (sectionName === 'reference') renderReference();
+    else if (sectionName === 'leaderboard') {
+        loadLeaderboard("python"); // ✅ live fetch every time
+    }
 }
+
 
 // ================================
 // C Quest - Rendering Functions
@@ -1204,6 +1207,7 @@ function submitAnswer() {
                 challenge.points,
                 badge?.name || null
             );
+            loadLeaderboard(quest);
         }
     } else {
         showErrorFeedback();
@@ -1454,37 +1458,37 @@ function applySavedProgress(count) {
 
 /// --- FRONTEND CHAT FUNCTION ---
 async function sendAIMessage() {
-  console.log("📤 Sending AI message");
+    console.log("📤 Sending AI message");
 
-  const message = aiChatInput.value.trim();
-  if (!message) return;
+    const message = aiChatInput.value.trim();
+    if (!message) return;
 
-  aiChatMessages.innerHTML += `
+    aiChatMessages.innerHTML += `
     <div class="user-msg">${message}</div>
   `;
-  aiChatInput.value = "";
+    aiChatInput.value = "";
 
-  try {
-    const res = await fetch("http://localhost:3000/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
-    });
+    try {
+        const res = await fetch("http://localhost:3000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+        });
 
-    const data = await res.json();
-    console.log("📥 AI response:", data);
+        const data = await res.json();
+        console.log("📥 AI response:", data);
 
-    aiChatMessages.innerHTML += `
+        aiChatMessages.innerHTML += `
       <div class="ai-msg">${data.reply}</div>
     `;
-  } catch (err) {
-    console.error("❌ AI fetch failed", err);
-    aiChatMessages.innerHTML += `
+    } catch (err) {
+        console.error("❌ AI fetch failed", err);
+        aiChatMessages.innerHTML += `
       <div class="ai-msg">AI not responding</div>
     `;
-  }
+    }
 
-  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
 }
 
 
@@ -1518,7 +1522,7 @@ function initGame() {
     renderLevels();
     renderBadges();
     renderReference();
-    
+
 
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (user?.email) {
