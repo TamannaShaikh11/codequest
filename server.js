@@ -7,6 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+
 /* ===============================
    DATABASE
 ================================ */
@@ -31,6 +35,28 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model("User", userSchema);
+
+/* ===============================
+   🤖 AI CHAT ROUTE (GROQ)
+================================ */
+app.post("/chat", async (req, res) => {
+  try {
+    console.log("📩 Chat request:", req.body);
+
+    const { message } = req.body;
+    if (!message) {
+      return res.json({ reply: "⚠️ Empty message" });
+    }
+
+    const reply = await callGroq(message);
+    res.json({ reply });
+
+  } catch (err) {
+    console.error("❌ Chat route error:", err);
+    res.status(500).json({ reply: "⚠️ Server error" });
+  }
+});
+
 
 /* ===============================
    AUTH ROUTES
@@ -111,66 +137,57 @@ app.get("/leaderboard/:quest", async (req, res) => {
 /* ===============================
    🔥 GOOGLE GEMINI AI CHAT
 ================================ */
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-async function callGemini(message) {
-  const model = "gemini-2.5-flash"; // Replace with your valid model
-
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("❌ GEMINI_API_KEY not set");
+async function callGroq(message) {
+  if (!process.env.GROQ_API_KEY) {
+    console.error("❌ GROQ_API_KEY missing");
     return "AI API key missing";
   }
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+        },
         body: JSON.stringify({
-          // Instructions to make answers short
-          temperature: 0.5,
-          max_output_tokens: 100,
-          contents: [
+          model: "llama-3.1-8b-instant",
+          messages: [
             {
-              parts: [
-                {
-                  text: "You are a helpful AI tutor. Answer the user question **in one or two sentences only**.\nUser: " + message
-                }
-              ]
+              role: "system",
+              content: "You are a helpful programming tutor. Answer briefly."
+            },
+            {
+              role: "user",
+              content: message
             }
-          ]
+          ],
+          temperature: 0.4
         })
       }
     );
 
     const data = await response.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    console.log("📥 Groq raw response:", JSON.stringify(data, null, 2));
 
-    return reply || "⚠️ AI did not respond";
+    if (data.error) {
+      console.error("❌ Groq API error:", data.error);
+      return "⚠️ AI error";
+    }
+
+    return (
+      data.choices?.[0]?.message?.content ||
+      "⚠️ AI did not respond"
+    );
   } catch (err) {
-    console.error("❌ Gemini API error:", err);
+    console.error("❌ Groq fetch failed:", err);
     return "⚠️ AI fetch failed";
   }
 }
-
-
-
-
-app.post("/chat", async (req, res) => {
-  console.log("📩 Chat request:", req.body);
-
-  try {
-    const reply = await callGemini(req.body.message);
-    console.log("🤖 Gemini replied");
-
-    res.json({ reply });
-  } catch (err) {
-    console.error("❌ Gemini error:", err);
-    res.status(500).json({ reply: "AI failed to respond" });
-  }
-});
-
 
 /* ===============================
    SERVER START
